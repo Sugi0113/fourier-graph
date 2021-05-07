@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>フーリエ級数確認</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<div style="font-size:30px;">入力欄 - <a href="javascript:void(0)" id="hide-link">非表示</a></div>
+<div style="float:left">
+<div class="input">
+    <table>
+    <tr>
+        <td class="label"><label for="N">N</label></td><td><input id="N" name="N" type="number" value="5" min="0" style="width: 100px;"></td>
+        <td class="label"><label for="dx">dx(計算する点の間隔)</label></td><td><input id="dx" name="dx" value="0.01" style="width:70px;"></td>
+        <td><input id="fukuso-check" name="fukuso-check" type="checkbox"></td><td><label for="fukuso-check">複素フーリエ級数を使用する</label></td>
+    </tr>
+    </table>
+    <table>
+    <tr>
+        <td class="label"><label for="a_n"><i>a</i><sub>n</sub></label></td><td><textarea id="a_n" name="a_n" placeholder="JSの関数で入力">function(n){ //例
+    return 0;
+}</textarea></td>
+        <td class="label"><label for="b_n"><i>b</i><sub>n</sub></label></td><td><textarea id="b_n" name="b_n" placeholder="JSの関数で入力">function(n){ //例
+    return 2/n*pow(-1,n+1);
+}</textarea></td>
+    </tr>
+    </table>
+    <table>
+    <tr>
+        <td class="label"><label for="c_n"><i>c</i><sub>n</sub></label></td><td><textarea id="c_n" name="c_n" placeholder="JSの関数で入力" disabled>function(n){ //例
+    return new Complex(実部, 虚部);
+}
+        </textarea></td>
+        <td class="label"><label for="f_x"><i>f(x)</i></label></td><td><textarea id="f_x" name="f_x" placeholder="JSの関数で入力">function(x){ //例
+    return x;
+}</textarea></td>
+    </tr>
+    </table>
+</div>
+</div>
+<div style="float: left; margin-left: 10px;">
+    <div class="input">
+        <table style="float: left;">
+            <tr>
+                <td style="padding-right:30px">ズーム倍率</td>
+                <td class="label"><label for="zoomX">x座標</label></td><td><input id="zoomX" name="zoomX" value="1" style="width: 50px;"></td>
+                <td class="label"><label for="zoomY">y座標</label></td><td><input id="zoomY" name="zoomX" value="1" style="width: 50px;" disabled></td>
+                <td><input id="same-zoom-check" name="same-zoom-check" type="checkbox" checked></td><td><label for="same-zoom-check">縦横比を維持する</label></td>
+            </tr>
+            <tr>
+                <td style="padding-right:30px">中心座標</td>
+                <td class="label"><label for="centerX">x座標</label></td><td><input id="centerX" name="centerX" value="0" style="width: 50px;"></td>
+                <td class="label"><label for="centerY">y座標</label></td><td><input id="centerY" name="centerX" value="0" style="width: 50px;"></td>
+            </tr>
+        </table>
+        <button id="redraw" disabled>再描画</button>
+    </div>
+    <div id="status">関数を入力してスタートをクリック<br>(または入力欄でCtrl+Enter)</div>
+    <button id="start">スタート</button>
+    <div style="width: 100%; clear:both;"></div>
+    <canvas style="width: 700px; height:700px;"></canvas>
+</div>
+<script src="script.js"></script>
+</html>
