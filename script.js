@@ -29,7 +29,7 @@ class Complex{
         return new Complex(r*Math.cos(arg), r*Math.sin(arg));
     }
 }
-let first = true, noChange = false, noChangeData = false, noChangeN = false, sabun=false, N, oldN = 0, A, B, C, F, dx, useFukuso, arr=[], arrA=[], arrB=[], ctx, zoom={x:1, y:1}, center={x:0, y:0}, warn='';
+let first = true, noChange = false, noChangeData = false, noChangeN = false, sabun=false, N, oldN = 0, A, B, C, F, dx, useFukuso, arr=[], arrA=[], arrB=[], ctx, zoom={x:1, y:1}, center={x:0, y:0}, warn='', time;
 const PI = Math.PI, sin = Math.sin, cos = Math.cos, exp = Math.exp, pow = Math.pow, abs = Math.abs, W=700, H=700;
 function expComp(c){
     let r = exp(c.a);
@@ -270,22 +270,33 @@ function revert(x, y){
 }
 function drawFunc(f){
     ctx.beginPath();
-    const l = Math.max(0, Math.round(convertX(-PI))), r = Math.min(W, Math.round(convertX(PI)));
-    ctx.moveTo(l, convertY(f(revertX(l))));
-    for(let x = l+1; x<r; x++)
-        ctx.lineTo(x, convertY(f(revertX(x))));
+    let x2 = revertX(0);
+    while(PI < x2) x2 -= 2*PI;
+    while(x2 < -PI) x2 += 2*PI;
+    ctx.moveTo(0, convertY(f(x2)));
+    for(let x = 1; x<W; x++){
+        x2 = revertX(x);
+        while(PI < x2) x2 -= 2*PI;
+        while(x2 < -PI) x2 += 2*PI;
+        ctx.lineTo(x, convertY(f(x2)));
+    }
     ctx.stroke();
 }
 function drawArr(arr){
     ctx.beginPath();
-    const l = Math.max(0, Math.floor((revertX(0)+PI)/dx)), r = Math.min(arr.length-1, Math.floor((revertX(W)+PI)/dx)+1);
-    let oldX=NaN;
-    ctx.moveTo(convertX(l*dx-PI), convertY(arr[Math.floor((revertX(l)+PI)/dx)]));
-    for(let i=l+1; i<=r; i++){
-        const x = convertX(i*dx-PI);
-        if(Math.round(x) === oldX) continue;
+    let x2 = revertX(0);
+    while(PI < x2) x2 -= 2*PI;
+    while(x2 < -PI) x2 += 2*PI;
+    let oldI = Math.floor((x2+PI)/dx), i;
+    ctx.moveTo(0, convertY(arr[oldI]));
+    for(let x = 1; x<W; x++){
+        x2 = revertX(x);
+        while(PI < x2) x2 -= 2*PI;
+        while(x2 < -PI) x2 += 2*PI;
+        i = Math.floor((x2+PI)/dx);
+        if(i === oldI) continue;
         ctx.lineTo(x, convertY(arr[i]));
-        oldX = x;
+        oldI = i;
     }
     ctx.stroke();
 }
@@ -305,8 +316,10 @@ function start(){
             status('描画中です');
             ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
             drawFunc(F);
+            time = Date.now();
             status('計算中です');
             ((useFukuso)?calcArrFukuso():calcArr()).then(()=>{
+                time = Date.now() - time;
                 first = false;
                 oldN = N;
                 noChange = true;
@@ -326,8 +339,8 @@ function start(){
                     if(!warn.match(/\(以下省略, 緑線が級数の虚部\)$/)) warn += '\n(緑線が級数の虚部)'
                     status(warn, false, true);
                 }
-                else if(useFukuso) status('完了 (緑線が級数の虚部)');
-                else status('完了');
+                else if(useFukuso) status(`完了 (緑線が級数の虚部)\n計算時間 : ${time}ms`);
+                else status(`完了\n計算時間 : ${time}ms`);
             }).catch(err => status(`下記のエラーが発生しました。\n${err.stack}`, true));
             break;
         case 1:
@@ -350,8 +363,8 @@ function start(){
                 if(!warn.match(/\(以下省略, 緑線が級数の虚部\)$/)) warn += '\n(緑線が級数の虚部)'
                 status(warn, false, true);
             }
-            else if(useFukuso) status('完了 (緑線が級数の虚部)');
-            else status('完了');
+            else if(useFukuso) status(`完了 (緑線が級数の虚部)\n計算時間 : ${time}ms`);
+            else status(`完了\n計算時間 : ${time}ms`);
 
         }
     }catch(err){
@@ -382,8 +395,8 @@ function redraw(){
                 drawArr(arr);
             }
         case 2:
-            if(useFukuso) status('完了 (緑線が級数の虚部)');
-            else status('完了')
+            if(useFukuso) status(`完了 (緑線が級数の虚部)\n計算時間 : ${time}ms`);
+            else status(`完了\n計算時間 : ${time}ms`);
         }
     }catch(err){
         status(`下記のエラーが発生しました。\n${err.stack}`, true);
@@ -436,6 +449,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         } else if(el.id === 'same-zoom-check'){
             el.addEventListener('input', ()=>{
                 document.getElementById('zoomY').disabled = el.checked;
+                if(el.checked) document.getElementById('zoomY').value = document.getElementById('zoomX').value;
             });
         }
     }
