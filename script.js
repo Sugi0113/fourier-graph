@@ -42,14 +42,10 @@ function status(text, err, warn){
     else tgt.className = '';
     tgt.innerText = text;
 }
-function A2(n){
-    return C(n).add(C(-n)).a;
-}
-function B2(n){
-    return -C(n).sub(C(-n)).b;
-}
 function calcArr(){
 return new Promise((resolve, reject)=>{
+    //計算途中で計算が再スタートされた場合に検知して現在の計算を止めるために、開始時点でのtimeを保存しておく
+    const time2 = time;
     if(N<oldN/2){
         oldN = 0;
         arr = [];
@@ -58,6 +54,7 @@ return new Promise((resolve, reject)=>{
     let increase = oldN<N;
     let x=-PI;
     void function loop(){try{
+        if(time !== time2) return;
         let i=0;
         if(!sabun){
             status(`計算中です (n=0)`);
@@ -68,11 +65,13 @@ return new Promise((resolve, reject)=>{
         if(x>PI+dx || sabun) {
             sabun = false;
             void function loop2(n){try{
+                if(time !== time2) return;
                 if(n>N ^ !increase) return resolve();
                 status(`計算中です (n=${n})`);
                 const a = A(n), b = B(n);
                 let x=-PI, i=0;
                 void function loop3(){try{
+                    if(time !== time2) return;
                     let i2=0;
                     for(; i<arr.length && i2<100; x+=dx, i++, i2++)
                         arr[i] += (increase?1:-1)*(a*cos(n*x) + b*sin(n*x));
@@ -86,6 +85,7 @@ return new Promise((resolve, reject)=>{
 }
 function calcArrFukuso(){
 return new Promise((resolve, reject)=>{
+    const time2 = time;
     if(N<oldN/2){
         oldN = 0;
         arr = [];
@@ -94,6 +94,7 @@ return new Promise((resolve, reject)=>{
     let increase = oldN<N;
     let x=-PI;
     void function loop(){try{
+        if(time !== time2) return;
         let i=0;
         if(!sabun){
             status(`計算中です (n=0)`);
@@ -107,12 +108,14 @@ return new Promise((resolve, reject)=>{
         if(x>PI+dx || sabun) {
             sabun = false;
             void function loop2(n){try{
+                if(time !== time2) return;
                 if(n>N ^ !increase) return resolve();
                 status(`計算中です (n=±${n})`);
                 const cPlus = C(n), cMinus = C(-n);
                 let errMin = 0, errMax = 0;//虚部の値の、各nごとの最大値・最小値
                 let x=-PI, i=0;
                 void function loop3(){try{
+                    if(time !== time2) return;
                     for(let i2=0; i<arrA.length && i2<100; x+=dx, i++, i2++){
                         let y1 = cPlus.multiple(expComp(new Complex(0, n*x))), y2 = cMinus.multiple(expComp(new Complex(0, -n*x)));
                         arrA[i] += (increase?1:-1)*(y1.a + y2.a);
@@ -120,7 +123,7 @@ return new Promise((resolve, reject)=>{
                         errMax = Math.max(errMax, y1.b+y2.b); errMin = Math.min(errMin, y1.b+y2.b);
                     }
                     if(i<arrA.length) setTimeout(loop3, 1);
-                    else setTimeout(()=>{
+                    else{
                         //各nごとに、虚部の絶対値が一定値を超えた場合は警告
                         //数学的にいえば0以外だが、計算誤差があるため一定値までは許容
                         if(Math.max(errMax, -errMin) > 1e-10){
@@ -133,8 +136,8 @@ return new Promise((resolve, reject)=>{
                                         `最大値:${errMax} , 最小値:${errMin}`;
                             }
                         }
-                        loop2(n+(increase?1:-1));
-                    }, 1);
+                        setTimeout(()=>loop2(n+(increase?1:-1)), 1);
+                    }
                 }catch(err){reject(err);}}();
             }catch(err){reject(err);}}(oldN+increase);
         }
@@ -144,7 +147,6 @@ return new Promise((resolve, reject)=>{
 function drawAxis(){
     ctx.lineWitdh = 1;
     ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-    
     ctx.beginPath();
     ctx.moveTo(0, convertY(0));
     ctx.lineTo(W, convertY(0));
