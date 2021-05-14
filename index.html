@@ -28,9 +28,9 @@
     <table>
     <tr>
         <td class="label"><label for="c_n"><i>c</i><sub>n</sub></label></td><td><textarea id="c_n" name="c_n" placeholder="JSの関数で入力" disabled>function(n){ //例
-    return new Complex(実部, 虚部);
-}
-        </textarea></td>
+    if(n===0) return new Complex(0, 0);
+    return new Complex(0, 1/n*pow(-1,n));
+}</textarea></td>
         <td class="label"><label for="f_x"><i>f(x)</i></label></td><td><textarea id="f_x" name="f_x" placeholder="JSの関数で入力">function(x){ //例
     return x;
 }</textarea></td>

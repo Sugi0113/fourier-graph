@@ -39,6 +39,9 @@ div.input-row{
 .err{
     background-color: #fbb !important;
 }
+.warn{
+    background-color: #fc7 !important;
+}
 #start{
     float: left;
     width : 100px;

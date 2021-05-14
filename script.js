@@ -29,15 +29,16 @@ class Complex{
         return new Complex(r*Math.cos(arg), r*Math.sin(arg));
     }
 }
-let first = true, noChange = false, noChangeData = false, noChangeN = false, sabun=false, N, oldN = 0, A, B, C, F, dx, useFukuso, arr=[], arrA=[], arrB=[], ctx, zoom={x:1, y:1}, center={x:0, y:0};
-const PI = Math.PI, sin = Math.sin, cos = Math.cos, exp = Math.exp, pow = Math.pow, W=700, H=700;
+let first = true, noChange = false, noChangeData = false, noChangeN = false, sabun=false, N, oldN = 0, A, B, C, F, dx, useFukuso, arr=[], arrA=[], arrB=[], ctx, zoom={x:1, y:1}, center={x:0, y:0}, warn='';
+const PI = Math.PI, sin = Math.sin, cos = Math.cos, exp = Math.exp, pow = Math.pow, abs = Math.abs, W=700, H=700;
 function expComp(c){
     let r = exp(c.a);
     return new Complex(r*cos(c.b), r*sin(c.b));
 }
-function status(text, err){
+function status(text, err, warn){
     let tgt = document.getElementById('status');
     if(err) tgt.className += 'err';
+    else if(warn) tgt.className += 'warn';
     else tgt.className = tgt.className.replace('err', '');
     tgt.innerText = text;
 }
@@ -87,8 +88,7 @@ function calcArrFukuso(){
 return new Promise((resolve, reject)=>{
     if(N<oldN/2){
         oldN = 0;
-        arrA = [];
-        arrB = [];
+        arr = [];
         sabun = false;
     }
     let increase = oldN<N;
@@ -110,15 +110,31 @@ return new Promise((resolve, reject)=>{
                 if(n>N ^ !increase) return resolve();
                 status(`計算中です (n=±${n})`);
                 const cPlus = C(n), cMinus = C(-n);
+                let errMin = 0, errMax = 0;//虚部の値の、各nごとの最大値・最小値
                 let x=-PI, i=0;
                 void function loop3(){try{
                     for(let i2=0; i<arrA.length && i2<100; x+=dx, i++, i2++){
                         let y1 = cPlus.multiple(expComp(new Complex(0, n*x))), y2 = cMinus.multiple(expComp(new Complex(0, -n*x)));
                         arrA[i] += (increase?1:-1)*(y1.a + y2.a);
                         arrB[i] += (increase?1:-1)*(y1.b + y2.b);
+                        errMax = Math.max(errMax, y1.b+y2.b); errMin = Math.min(errMin, y1.b+y2.b);
                     }
                     if(i<arrA.length) setTimeout(loop3, 1);
-                    else setTimeout(()=>loop2(n+(increase?1:-1)), 1);
+                    else setTimeout(()=>{
+                        //各nごとに、虚部の絶対値が一定値を超えた場合は警告
+                        //数学的にいえば0以外だが、計算誤差があるため一定値までは許容
+                        if(Math.max(errMax, -errMin) > 1e-10){
+                            if(warn.match(/\n/g) && warn.match(/\n/g).length === 5){//3つのnまでは表示するが、それ以降の場合は追記しない
+                                warn += '\n(以下省略)';
+                            }
+                            if(!(warn.match(/\n/g)) || warn.match(/\n/g).length < 5){
+                                if(warn.length) warn += '\n';
+                                warn += `n=${n}においてc(n)*e^(inx)+c(-n)*e^(-inx)の値が0になりませんでした\n`+
+                                        `最大値:${errMax} , 最小値:${errMin}`;
+                            }
+                        }
+                        loop2(n+(increase?1:-1));
+                    }, 1);
                 }catch(err){reject(err);}}();
             }catch(err){reject(err);}}(oldN+increase);
         }
@@ -127,7 +143,7 @@ return new Promise((resolve, reject)=>{
 }
 function drawAxis(){
     ctx.lineWitdh = 1;
-    ctx.strokeStyle = 'black';
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
     
     ctx.beginPath();
     ctx.moveTo(0, convertY(0));
@@ -197,6 +213,8 @@ function init(graphicOnly){
     } else if(!noChangeData){
         oldN = 0;
         arr = [];
+        arrA = [];
+        arrB = [];
         sabun = false;
     }
     if(isNaN(N)){status('nの値を入力してください。'); return -1;}
@@ -275,6 +293,7 @@ function clearCanvas(){
     ctx.clearRect(0, 0, W, H);
 }
 function start(){
+    warn = '';
     try{
         document.getElementById('redraw').disabled = false;
         if(noChange) return;
@@ -303,7 +322,9 @@ function start(){
                     ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
                     drawArr(arr);
                 }
-                status('完了');
+                console.log(warn);
+                if(warn.length) status(warn, false, true);
+                else status('完了');
             }).catch(err => status(`下記のエラーが発生しました。\n${err.stack}`, true));
             break;
         case 1:
@@ -322,7 +343,10 @@ function start(){
                 drawArr(arr);
             }
         case 2:
-            status('完了')
+            console.log(warn);
+            if(warn.length) status(warn, false, true);
+            else status('完了');
+
         }
     }catch(err){
         status(`下記のエラーが発生しました。\n${err.stack}`, true);
