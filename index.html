@@ -6,16 +6,20 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <div style="font-size:30px;">入力欄 - <a href="javascript:void(0)" id="hide-link">非表示</a></div>
-<div style="float:left">
-<div class="input">
-    <table>
-    <tr>
-        <td class="label"><label for="N">N</label></td><td><input id="N" name="N" type="number" value="5" min="0" style="width: 100px;"></td>
-        <td class="label"><label for="dx">dx(計算する点の間隔)</label></td><td><input id="dx" name="dx" value="0.01" style="width:70px;"></td>
-        <td><input id="fukuso-check" name="fukuso-check" type="checkbox"></td><td><label for="fukuso-check">複素フーリエ級数を使用する</label></td>
-    </tr>
-    </table>
-    <table>
+<div id="left" class="input" style="float:left">
+    <table><tbody>
+        <tr>
+            <td class="label"><label for="N">N</label></td><td><input id="N" name="N" type="number" value="5" min="0" style="width: 100px;"></td>
+            <td class="label"><label for="dx">dx(計算する点の間隔)</label></td><td><input id="dx" name="dx" value="0.01" style="width:70px;"></td>
+            <td><input id="fukuso-check" name="fukuso-check" type="checkbox"></td><td><label for="fukuso-check">複素フーリエ級数を使用する</label></td>
+        </tr>
+    </tbody></table>
+    <table style="margin-left: 20px;"><tbody>
+        <tr>
+            <td class="label"><label for="syuki">周期(JSの式で入力)</label></td><td><input id="syuki" name="syuki" value="2*PI" style="width: 450px;"></td>
+        </tr>
+    </tbody></table>
+    <table><tbody>
     <tr>
         <td class="label"><label for="a_n"><i>a</i><sub>n</sub></label></td><td><textarea id="a_n" name="a_n" placeholder="JSの関数で入力">function(n){ //例
     return 0;
@@ -24,8 +28,8 @@
     return 2/n*pow(-1,n+1);
 }</textarea></td>
     </tr>
-    </table>
-    <table>
+    </tbody></table>
+    <table><tbody>
     <tr>
         <td class="label"><label for="c_n"><i>c</i><sub>n</sub></label></td><td><textarea id="c_n" name="c_n" placeholder="JSの関数で入力" disabled>function(n){ //例
     if(n===0) return new Complex(0, 0);
@@ -35,8 +39,10 @@
     return x;
 }</textarea></td>
     </tr>
-    </table>
-</div>
+    </tbody></table>
+    <div style="width:680px; padding-top:10px; padding-bottom:10px; margin-left: auto;margin-right: auto; left:0; right:0;">
+        計算の所要時間はN+1と周期に概ね比例し、dxおよびCPUのシングルスレッド性能に概ね反比例します。<br>
+    </div>
 </div>
 <div style="float: left; margin-left: 10px;">
     <div class="input">
@@ -52,7 +58,7 @@
                 <td class="label"><label for="centerX">x座標</label></td><td><input id="centerX" name="centerX" value="0" style="width: 50px;"></td>
                 <td class="label"><label for="centerY">y座標</label></td><td><input id="centerY" name="centerX" value="0" style="width: 50px;"></td>
             </tr>
-        </table>
+        </tbody></table>
         <button id="redraw" disabled>再描画</button>
     </div>
     <div id="status">関数を入力してスタートをクリック<br>(または入力欄でCtrl+Enter)</div>

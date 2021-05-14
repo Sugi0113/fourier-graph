@@ -29,8 +29,12 @@ class Complex{
         return new Complex(r*Math.cos(arg), r*Math.sin(arg));
     }
 }
-let first = true, noChange = false, noChangeData = false, noChangeN = false, sabun=false, N, oldN = 0, A, B, C, F, dx, useFukuso, arr=[], arrA=[], arrB=[], ctx, zoom={x:1, y:1}, center={x:0, y:0}, warn='', time;
-const PI = Math.PI, sin = Math.sin, cos = Math.cos, exp = Math.exp, pow = Math.pow, abs = Math.abs, W=700, H=700;
+let first = true, noChange = false, noChangeData = false, noChangeN = false, sabun=false, N, oldN = 0, A, B, C, F, dx, l, useFukuso, arr=[], arrA=[], arrB=[], ctx, zoom={x:1, y:1}, center={x:0, y:0}, warn='', time;
+const PI = Math.PI, sin = Math.sin, cos = Math.cos, exp = Math.exp, pow = Math.pow, abs = Math.abs, W=1400, H=1400;
+function log(...a){
+    console.log(...a);
+    return a;
+}
 function expComp(c){
     let r = exp(c.a);
     return new Complex(r*cos(c.b), r*sin(c.b));
@@ -40,7 +44,7 @@ function status(text, err, warn){
     if(err) tgt.className += 'err';
     else if(warn) tgt.className += 'warn';
     else tgt.className = '';
-    tgt.innerText = text;
+    tgt.innerHTML = text;
 }
 function calcArr(){
 return new Promise((resolve, reject)=>{
@@ -52,29 +56,29 @@ return new Promise((resolve, reject)=>{
         sabun = false;
     }
     let increase = oldN<N;
-    let x=-PI;
+    let x=-l;
     void function loop(){try{
         if(time !== time2) return;
         let i=0;
         if(!sabun){
             status(`計算中です (n=0)`);
-            for(let y=A(0)/2; x<=PI+dx&&i<100; x+=dx, i++)
+            for(let y=A(0)/2; x<=l+dx&&i<100; x+=dx, i++)
                 arr.push(y);
-            if(x<=PI+dx) setTimeout(loop, 1);
+            if(x<=l+dx) setTimeout(loop, 1);
         }
-        if(x>PI+dx || sabun) {
+        if(x>l+dx || sabun) {
             sabun = false;
             void function loop2(n){try{
                 if(time !== time2) return;
                 if(n>N ^ !increase) return resolve();
                 status(`計算中です (n=${n})`);
                 const a = A(n), b = B(n);
-                let x=-PI, i=0;
+                let x=-l, i=0;
                 void function loop3(){try{
                     if(time !== time2) return;
                     let i2=0;
                     for(; i<arr.length && i2<100; x+=dx, i++, i2++)
-                        arr[i] += (increase?1:-1)*(a*cos(n*x) + b*sin(n*x));
+                        arr[i] += (increase?1:-1)*(a*cos(n*PI*x/l) + b*sin(n*PI*x/l));
                     if(i<arr.length) setTimeout(loop3, 1);
                     else setTimeout(()=>loop2(n+(increase?1:-1)), 1);
                 }catch(err){reject(err);}}();
@@ -99,13 +103,13 @@ return new Promise((resolve, reject)=>{
         if(!sabun){
             status(`計算中です (n=0)`);
             const y=C(0);
-            for(; x<=PI+dx&&i<100; x+=dx, i++){
+            for(; x<=l+dx&&i<100; x+=dx, i++){
                 arrA.push(y.a);
                 arrB.push(y.b);
             }
-            if(x<=PI+dx) setTimeout(loop, 1);
+            if(x<=l+dx) setTimeout(loop, 1);
         }
-        if(x>PI+dx || sabun) {
+        if(x>l+dx || sabun) {
             sabun = false;
             void function loop2(n){try{
                 if(time !== time2) return;
@@ -113,11 +117,11 @@ return new Promise((resolve, reject)=>{
                 status(`計算中です (n=±${n})`);
                 const cPlus = C(n), cMinus = C(-n);
                 let errMin = 0, errMax = 0;//虚部の値の、各nごとの最大値・最小値
-                let x=-PI, i=0;
+                let x=-l, i=0;
                 void function loop3(){try{
                     if(time !== time2) return;
                     for(let i2=0; i<arrA.length && i2<100; x+=dx, i++, i2++){
-                        let y1 = cPlus.multiple(expComp(new Complex(0, n*x))), y2 = cMinus.multiple(expComp(new Complex(0, -n*x)));
+                        let y1 = cPlus.multiple(expComp(new Complex(0, n*PI*x/l))), y2 = cMinus.multiple(expComp(new Complex(0, -n*PI*x/l)));
                         arrA[i] += (increase?1:-1)*(y1.a + y2.a);
                         arrB[i] += (increase?1:-1)*(y1.b + y2.b);
                         errMax = Math.max(errMax, y1.b+y2.b); errMin = Math.min(errMin, y1.b+y2.b);
@@ -127,12 +131,12 @@ return new Promise((resolve, reject)=>{
                         //各nごとに、虚部の絶対値が一定値を超えた場合は警告
                         //数学的にいえば0以外だが、計算誤差があるため一定値までは許容
                         if(Math.max(errMax, -errMin) > 1e-10){
-                            if(warn.match(/\n/g) && warn.match(/\n/g).length === 5){//3つのnまでは表示するが、それ以降の場合は追記しない
-                                warn += '\n(以下省略, 緑線が級数の虚部)';
+                            if(warn.match(/<br>/g) && warn.match(/<br>/g).length === 5){//3つのnまでは表示するが、それ以降の場合は追記しない
+                                warn += '<br>(以下省略, 緑線が級数の虚部)';
                             }
-                            if(!(warn.match(/\n/g)) || warn.match(/\n/g).length < 5){
-                                if(warn.length) warn += '\n';
-                                warn += `n=${n}においてc(n)*e^(inx)+c(-n)*e^(-inx)の値が0になりませんでした\n`+
+                            if(!(warn.match(/<br>/g)) || warn.match(/<br>/g).length < 5){
+                                if(warn.length) warn += '<br>';
+                                warn += `n=${n}においてc<sub>n</sub>e<sup>inx</sup>+c<sub>-n</sub>e<sup>-inx</sup>の値が0になりませんでした<br>`+
                                         `最大値:${errMax} , 最小値:${errMin}`;
                             }
                         }
@@ -145,102 +149,84 @@ return new Promise((resolve, reject)=>{
 });
 }
 function drawAxis(){
-    ctx.lineWitdh = 1;
+    ctx.lineWidth = 2;
     ctx.strokeStyle = 'rgba(0,0,0,0.5)';
     ctx.beginPath();
     ctx.moveTo(0, convertY(0));
     ctx.lineTo(W, convertY(0));
     ctx.stroke();//x軸を引く
-    ctx.beginPath();
-    ctx.moveTo(convertX(1), convertY(0)-H/100);
-    ctx.lineTo(convertX(1), convertY(0)+H/100);
-    ctx.stroke();//x軸の1の目盛りを引く
-    ctx.beginPath();
-    ctx.moveTo(convertX(-1), convertY(0)-H/100);
-    ctx.lineTo(convertX(-1), convertY(0)+H/100);
-    ctx.stroke();//x軸の-1の目盛りを引く
-    if(convertX(PI)<=W){
+    for(let x = Math.ceil(revertX(0)/l)*l; x<revertX(W); x += l){
+        if(abs(x) < 1e-5) continue; //原点には描かない(足し算の計算誤差を想定して、===0とはしていない)
+        //lの整数倍の箇所に目盛りをつける
         ctx.beginPath();
-        ctx.moveTo(convertX(PI), convertY(0)-H/100);
-        ctx.lineTo(convertX(PI), convertY(0)+H/100);
-        ctx.stroke();//x軸のπの目盛りを引く
+        ctx.moveTo(convertX(x), convertY(0)-W/100);
+        ctx.lineTo(convertX(x), convertY(0)+W/100);
+        ctx.stroke();
     }
-    if(convertX(-PI)>=0){
-        ctx.beginPath();
-        ctx.moveTo(convertX(-PI), convertY(0)-H/100);
-        ctx.lineTo(convertX(-PI), convertY(0)+H/100);
-        ctx.stroke();//x軸の-πの目盛りを引く
-    }
-
     ctx.beginPath();
     ctx.moveTo(convertX(0), 0);
     ctx.lineTo(convertX(0), H);
     ctx.stroke();//y軸を引く
-    ctx.beginPath();
-    ctx.moveTo(convertX(0)-W/100, convertY(1));
-    ctx.lineTo(convertX(0)+W/100, convertY(1));
-    ctx.stroke();//y軸の1の目盛りを引く
-    ctx.beginPath();
-    ctx.moveTo(convertX(0)-W/100, convertY(-1));
-    ctx.lineTo(convertX(0)+W/100, convertY(-1));
-    ctx.stroke();//y軸の-1の目盛りを引く
-    if(convertY(PI)<=H){
+    for(let y = Math.ceil(revertY(H)/l)*l; y<revertY(0); y += l){
+        if(abs(y) < 1e-5) continue;
         ctx.beginPath();
-        ctx.moveTo(convertX(0)-W/100, convertY(PI));
-        ctx.lineTo(convertX(0)+W/100, convertY(PI));
-        ctx.stroke();//y軸のπの目盛りを引く
-    }
-    if(convertY(-PI)>=0){
-        ctx.beginPath();
-        ctx.moveTo(convertX(0)-W/100, convertY(-PI));
-        ctx.lineTo(convertX(0)+W/100, convertY(-PI));
-        ctx.stroke();//y軸の-πの目盛りを引く
+        ctx.moveTo(convertX(0)-W/100, convertY(y));
+        ctx.lineTo(convertX(0)+W/100, convertY(y));
+        ctx.stroke();
     }
 }
 function init(graphicOnly){
-    let nArea = document.getElementById('N'), dxArea=document.getElementById('dx'), aArea = document.getElementById('a_n'), bArea = document.getElementById('b_n'), cArea = document.getElementById('c_n'), fArea = document.getElementById('f_x'), zoomXAarea = document.getElementById('zoomX'), zoomYAarea = document.getElementById('zoomY'), centerXAarea = document.getElementById('centerX'), centerYAarea = document.getElementById('centerY');
+    let nArea = document.getElementById('N'), dxArea=document.getElementById('dx'), aArea = document.getElementById('a_n'), bArea = document.getElementById('b_n'), cArea = document.getElementById('c_n'), fArea = document.getElementById('f_x'), zoomXAarea = document.getElementById('zoomX'), zoomYAarea = document.getElementById('zoomY'), centerXAarea = document.getElementById('centerX'), centerYAarea = document.getElementById('centerY'), syukiArea = document.getElementById('syuki');
     useFukuso = document.getElementById('fukuso-check').checked;
-    dx = parseFloat(dxArea.value);
     zoom.x = parseFloat(zoomXAarea.value);
     zoom.y = parseFloat(zoomYAarea.value);
+    if(isNaN(zoom.x)||isNaN(zoom.y) || zoom.x <= 0 || zoom.y <= 0){status('ズーム倍率を正しく指定してください', true); return -1;}
     center.x = parseFloat(centerXAarea.value);
     center.y = parseFloat(centerYAarea.value);
-    if(isNaN(dx)){status('dxの値を入力してください。'); return -1;}
-    if(dx <= 0){status('dxの値は0より大きい値で入力してください。'); return -1;}
-    N = parseInt(nArea.value);
+    if(isNaN(center.x)||isNaN(center.y)){status('中心座標を正しく指定してください', true); return -1;}
     if(!first && noChangeData && noChangeN || graphicOnly) {
         return 1;
     } else if(noChangeData && !noChangeN){
         sabun = true;
     } else if(!noChangeData){
+        dx = parseFloat(dxArea.value);
+        if(isNaN(dx)){status('dxの値を正しく入力してください。', true); return -1;}
+        if(dx <= 0){status('dxの値は0より大きい値で入力してください。', true); return -1;}
+        l = eval(syukiArea.value)/2;
+        if(isNaN(l)){status('周期を正しく入力してください。', true); return -1;}
+        if(l <= 0){status('周期は0より大きい値で入力してください。', true); return -1;}
         oldN = 0;
         arr = [];
         arrA = [];
         arrB = [];
         sabun = false;
     }
-    if(isNaN(N)){status('nの値を入力してください。'); return -1;}
+    if(!noChangeN){
+        N = parseInt(nArea.value);
+        if(isNaN(N)){status('nの値を入力してください。'); return -1;}
+        if(N<0){status('nの値は非負の整数を入力してください。'); return -1;}
+    }
     nArea.value = N.toString();
     dxArea.value = dx.toString();
     if(!useFukuso){
         try{
             if(aArea.value.length) A = eval(`(()=> ${aArea.value})()`);
-            else {status('a_nの式を入力してください。', true); return -1;}
+            else {status('a<sub>n</sub>の式を入力してください。', true); return -1;}
         }catch(err){
-            status('a_nの式の形式が正しくありません。', true); return -1;
+            status('a<sub>n</sub>の式の形式が正しくありません。', true); return -1;
         }
         try{
             if(!useFukuso && bArea.value.length) B = eval(`(()=> ${bArea.value})()`);
-            else {status('b_nの式を入力してください。', true); return -1;}
+            else {status('b<sub>n</sub>の式を入力してください。', true); return -1;}
         }catch(err){
-            status('b_nの式の形式が正しくありません。', true); return -1;
+            status('b<sub>n</sub>の式の形式が正しくありません。', true); return -1;
         }
     } else {
         try{
             if(useFukuso && cArea.value.length) C = eval(`(()=> ${cArea.value})()`);
-            else {status('c_nの式を入力してください。', true); return -1;}
+            else {status('c<sub>n</sub>の式を入力してください。', true); return -1;}
         }catch(err){
-            status('c_nの式の形式が正しくありません。', true); return -1;
+            status('c<sub>n</sub>の式の形式が正しくありません。', true); return -1;
         }
     }
     try{
@@ -253,52 +239,44 @@ function init(graphicOnly){
     return 0;
 }
 function convertX(x){
-    return W/2 + (x-center.x)/PI/2*W*zoom.x;
+    return W/2 + (x-center.x)/l/2*W*zoom.x;
 }
 function convertY(y){
-    return H/2 - (y-center.y)/PI/2*H*zoom.y;
+    return H/2 - (y-center.y)/l/2*H*zoom.y;
 }
 function convert(x, y){
     return {x:convertX(x), y:convertY(y)};
 }
 function revertX(x){
-    return center.x+(x-W/2)*2*PI/zoom.x/W;
+    return center.x+(x-W/2)*2*l/zoom.x/W;
 }
 function revertY(y){
-    return center.y+(H/2-y)*2*PI/zoom.y/H;
+    return center.y+(H/2-y)*2*l/zoom.y/H;
 }
-function revert(x, y){
-    return {x:revertX(x), y:revertY(y)};
+function normalize(x){
+    x = (x+l)%(2*l);
+    if(x < 0) x += 2*l;
+    return x-l;
 }
 function drawFunc(f){
     ctx.beginPath();
-    let x2 = revertX(0);
-    while(PI < x2) x2 -= 2*PI;
-    while(x2 < -PI) x2 += 2*PI;
-    ctx.moveTo(0, convertY(f(x2)));
-    for(let x = 1; x<W; x++){
-        x2 = revertX(x);
-        while(PI < x2) x2 -= 2*PI;
-        while(x2 < -PI) x2 += 2*PI;
-        ctx.lineTo(x, convertY(f(x2)));
+    let x = Math.floor(revertX(0)/dx)*dx;
+    let r = revertX(W)+dx;
+    ctx.moveTo(convertX(x), convertY(f(normalize(x))));
+    let i=0;
+    for(x+=dx; x<=r; x+=dx){
+        ctx.lineTo(convertX(x), convertY(f(normalize(x))));
     }
     ctx.stroke();
 }
 function drawArr(arr){
     ctx.beginPath();
-    let x2 = revertX(0);
-    while(PI < x2) x2 -= 2*PI;
-    while(x2 < -PI) x2 += 2*PI;
-    let oldI = Math.floor((x2+PI)/dx), i;
-    ctx.moveTo(0, convertY(arr[oldI]));
-    for(let x = 1; x<W; x++){
-        x2 = revertX(x);
-        while(PI < x2) x2 -= 2*PI;
-        while(x2 < -PI) x2 += 2*PI;
-        i = Math.floor((x2+PI)/dx);
-        if(i === oldI) continue;
-        ctx.lineTo(x, convertY(arr[i]));
-        oldI = i;
+    let x = Math.floor(revertX(0)/dx)*dx;
+    let r = revertX(W)+dx;
+    ctx.moveTo(convertX(x), convertY(arr[Math.floor((normalize(x)+l)/dx)]));
+    let i=0;
+    for(x+=dx; x<=r; x+=dx){
+        ctx.lineTo(convertX(x), convertY(arr[Math.floor((normalize(x)+l)/dx)]));
     }
     ctx.stroke();
 }
@@ -338,12 +316,12 @@ function start(){
                     drawArr(arr);
                 }
                 if(warn.length){
-                    if(!warn.match(/\(以下省略, 緑線が級数の虚部\)$/)) warn += '\n(緑線が級数の虚部)'
+                    if(!warn.match(/\(以下省略, 緑線が級数の虚部\)$/)) warn += '<br>(緑線が級数の虚部)'
                     status(warn, false, true);
                 }
-                else if(useFukuso) status(`完了 (緑線が級数の虚部)\n計算時間 : ${time}ms`);
-                else status(`完了\n計算時間 : ${time}ms`);
-            }).catch(err => status(`下記のエラーが発生しました。\n${err.stack}`, true));
+                else if(useFukuso) status(`完了 (緑線が級数の虚部)<br>計算時間 : ${time}ms`);
+                else status(`完了<br>計算時間 : ${time}ms`);
+            }).catch(err => status(`下記のエラーが発生しました。<br>${err.stack}`, true));
             break;
         case 1:
             clearCanvas();
@@ -362,15 +340,15 @@ function start(){
             }
         case 2:
             if(warn.length){
-                if(!warn.match(/\(以下省略, 緑線が級数の虚部\)$/)) warn += '\n(緑線が級数の虚部)'
+                if(!warn.match(/\(以下省略, 緑線が級数の虚部\)$/)) warn += '<br>(緑線が級数の虚部)'
                 status(warn, false, true);
             }
-            else if(useFukuso) status(`完了 (緑線が級数の虚部)\n計算時間 : ${time}ms`);
-            else status(`完了\n計算時間 : ${time}ms`);
+            else if(useFukuso) status(`完了 (緑線が級数の虚部)<br>計算時間 : ${time}ms`);
+            else status(`完了<br>計算時間 : ${time}ms`);
 
         }
     }catch(err){
-        status(`下記のエラーが発生しました。\n${err.stack}`, true);
+        status(`下記のエラーが発生しました。<br>${err.stack}`, true);
     }
 }
 function redraw(){
@@ -397,11 +375,11 @@ function redraw(){
                 drawArr(arr);
             }
         case 2:
-            if(useFukuso) status(`完了 (緑線が級数の虚部)\n計算時間 : ${time}ms`);
-            else status(`完了\n計算時間 : ${time}ms`);
+            if(useFukuso) status(`完了 (緑線が級数の虚部)<br>計算時間 : ${time}ms`);
+            else status(`完了<br>計算時間 : ${time}ms`);
         }
     }catch(err){
-        status(`下記のエラーが発生しました。\n${err.stack}`, true);
+        status(`下記のエラーが発生しました。<br>${err.stack}`, true);
     }
 }
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -416,14 +394,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
         document.getElementById('c_n').disabled = !checked;
     });
     document.getElementById('hide-link').addEventListener('click', e => {
+        let el = document.getElementById('left');
         if(e.target.innerHTML === '表示'){
             e.target.innerHTML = '非表示';
-            for(const el of document.getElementsByClassName('input'))
-                el.className = el.className.replace(' hide', '');
+            el.className = el.className.replace(' hide', '');
         } else {
             e.target.innerHTML = '表示';
-            for(const el of document.getElementsByClassName('input'))
-                el.className += ' hide';
+            el.className += ' hide';
         }
     });
     for(const el of document.querySelectorAll('input, textarea')){
