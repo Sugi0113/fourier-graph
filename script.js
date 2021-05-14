@@ -39,7 +39,7 @@ function status(text, err, warn){
     let tgt = document.getElementById('status');
     if(err) tgt.className += 'err';
     else if(warn) tgt.className += 'warn';
-    else tgt.className = tgt.className.replace('err', '');
+    else tgt.className = '';
     tgt.innerText = text;
 }
 function A2(n){
@@ -125,7 +125,7 @@ return new Promise((resolve, reject)=>{
                         //数学的にいえば0以外だが、計算誤差があるため一定値までは許容
                         if(Math.max(errMax, -errMin) > 1e-10){
                             if(warn.match(/\n/g) && warn.match(/\n/g).length === 5){//3つのnまでは表示するが、それ以降の場合は追記しない
-                                warn += '\n(以下省略)';
+                                warn += '\n(以下省略, 緑線が級数の虚部)';
                             }
                             if(!(warn.match(/\n/g)) || warn.match(/\n/g).length < 5){
                                 if(warn.length) warn += '\n';
@@ -322,8 +322,11 @@ function start(){
                     ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
                     drawArr(arr);
                 }
-                console.log(warn);
-                if(warn.length) status(warn, false, true);
+                if(warn.length){
+                    if(!warn.match(/\(以下省略, 緑線が級数の虚部\)$/)) warn += '\n(緑線が級数の虚部)'
+                    status(warn, false, true);
+                }
+                else if(useFukuso) status('完了 (緑線が級数の虚部)');
                 else status('完了');
             }).catch(err => status(`下記のエラーが発生しました。\n${err.stack}`, true));
             break;
@@ -343,8 +346,11 @@ function start(){
                 drawArr(arr);
             }
         case 2:
-            console.log(warn);
-            if(warn.length) status(warn, false, true);
+            if(warn.length){
+                if(!warn.match(/\(以下省略, 緑線が級数の虚部\)$/)) warn += '\n(緑線が級数の虚部)'
+                status(warn, false, true);
+            }
+            else if(useFukuso) status('完了 (緑線が級数の虚部)');
             else status('完了');
 
         }
@@ -376,7 +382,8 @@ function redraw(){
                 drawArr(arr);
             }
         case 2:
-            status('完了')
+            if(useFukuso) status('完了 (緑線が級数の虚部)');
+            else status('完了')
         }
     }catch(err){
         status(`下記のエラーが発生しました。\n${err.stack}`, true);
